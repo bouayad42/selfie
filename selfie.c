@@ -390,9 +390,9 @@ uint64_t SYM_SRL         = 29; // >=
 
 // symbols for bootstrapping
 
-uint64_t SYM_INT      = 28; // int
-uint64_t SYM_CHAR     = 29; // char
-uint64_t SYM_UNSIGNED = 30; // unsigned
+uint64_t SYM_INT      = 30; // int
+uint64_t SYM_CHAR     = 31; // char
+uint64_t SYM_UNSIGNED = 32; // unsigned
 
 uint64_t* SYMBOLS; // strings representing symbols
 
@@ -4028,46 +4028,22 @@ uint64_t compile_bit_wise_expression() {
     // assert: allocated_temporaries == n + 2
 
     if (operator_symbol == SYM_SLL) {
-      if (ltype == UINT64STAR_T) {
+      if (ltype == UINT64_T) {
         if (rtype == UINT64_T)
-          // UINT64STAR_T + UINT64_T
-          // pointer arithmetic: factor of 2^3 of integer operand
-          emit_left_shift_by(current_temporary(), 3);
+             emit_sll(previous_temporary(), previous_temporary(), current_temporary());
         else
-          // UINT64STAR_T + UINT64STAR_T
           syntax_error_message("(uint64_t*) + (uint64_t*) is undefined");
-      } else if (rtype == UINT64STAR_T) {
-        // UINT64_T + UINT64STAR_T
-        // pointer arithmetic: factor of 2^3 of integer operand
-        emit_left_shift_by(previous_temporary(), 3);
+      } else 
+        syntax_error_message("(uint64_t*) + (uint64_t*) is undefined");
 
-        ltype = UINT64STAR_T;
-      }
-
-      emit_sll(previous_temporary(), previous_temporary(), current_temporary());
-
-    } else if (operator_symbol == SYM_MINUS) {
-      if (ltype == UINT64STAR_T) {
-        if (rtype == UINT64_T) {
-          // UINT64STAR_T - UINT64_T
-          // pointer arithmetic: factor of 2^3 of integer operand
-          emit_left_shift_by(current_temporary(), 3);
-          emit_sub(previous_temporary(), previous_temporary(), current_temporary());
-        } else {
-          // UINT64STAR_T - UINT64STAR_T
-          // pointer arithmetic: (left_term - right_term) / SIZEOFUINT64
-          emit_sub(previous_temporary(), previous_temporary(), current_temporary());
-          emit_addi(current_temporary(), REG_ZR, SIZEOFUINT64);
-          emit_divu(previous_temporary(), previous_temporary(), current_temporary());
-
-          ltype = UINT64_T;
-        }
-      } else if (rtype == UINT64STAR_T)
-        // UINT64_T - UINT64STAR_T
-        syntax_error_message("(uint64_t) - (uint64_t*) is undefined");
-      else
-        // UINT64_T - UINT64_T
-        emit_srl(previous_temporary(), previous_temporary(), current_temporary());
+    } else if (operator_symbol == SYM_SRL) {
+      if (ltype == UINT64_T) {
+        if (rtype == UINT64_T)
+             emit_srl(previous_temporary(), previous_temporary(), current_temporary());
+        else
+          syntax_error_message("(uint64_t*) + (uint64_t*) is undefined");
+      } else 
+        syntax_error_message("(uint64_t*) + (uint64_t*) is undefined");
     }
 
     tfree(1);
@@ -5524,12 +5500,12 @@ void emit_add(uint64_t rd, uint64_t rs1, uint64_t rs2) {
   ic_add = ic_add + 1;
 }
 void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-  emit_instruction(encode_r_format(F7_SLL, rs2, rs1, F3_ADD, rd, OP_OP));
+  emit_instruction(encode_r_format(F7_SLL, rs2, rs1, F3_SLL, rd, OP_OP));
 
   ic_add = ic_add + 1;
 }
 void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-  emit_instruction(encode_r_format(F7_SRL, rs2, rs1, F3_ADD, rd, OP_OP));
+  emit_instruction(encode_r_format(F7_SRL, rs2, rs1, F3_SRL, rd, OP_OP));
 
   ic_add = ic_add + 1;
 }
@@ -6862,7 +6838,7 @@ void do_sll() {
 
   pc = pc + INSTRUCTIONSIZE;
 
-  ic_add = ic_add + 1;
+  //ic_add = ic_add + 1;
 }
 
 
@@ -6873,7 +6849,7 @@ void do_srl() {
 
   pc = pc + INSTRUCTIONSIZE;
 
-  ic_sub = ic_sub + 1;
+  //ic_sub = ic_sub + 1;
 }
 
 void constrain_add_sub_mul_divu_remu_sltu(char* operator) {
@@ -7873,17 +7849,6 @@ void decode_execute() {
 
         return;
       } 
-      if (funct7 == F7_SLL) {
-  
-          do_sll();
-        return;
-      }
-
-      else if (funct7 == F7_SRL) {
-          do_srl();
-
-        return;
-      }
       else if (funct7 == F7_SUB) {
         if (debug) {
           if (record) {
@@ -7931,7 +7896,13 @@ void decode_execute() {
 
         return;
       }
-    } else if (funct3 == F3_DIVU) {
+    }else if (funct3 == F3_SLL) {
+  
+          do_sll();
+        return;
+      }
+
+     else if (funct3 == F3_DIVU) {
       if (funct7 == F7_DIVU) {
         if (debug) {
           if (record) {
@@ -7955,7 +7926,12 @@ void decode_execute() {
           do_divu();
 
         return;
+      } else if (funct7 == F7_SRL) {
+          do_srl();
+
+        return;
       }
+
     } else if (funct3 == F3_REMU) {
       if (funct7 == F7_REMU) {
         if (debug) {

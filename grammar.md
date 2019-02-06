@@ -55,11 +55,12 @@ statement        = call ";" | while | if | return ";" |
 
 call             = identifier "(" [ expression { "," expression } ] ")" .
 
-expression       = simpleExpression [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) simpleExpression ] .
+expression       = bitWiseShift [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) bitWiseShift ] .
+
+bitWiseShift    = simpleExpression[("<<"|">>") simpleExpression] .
 
 simpleExpression = term { ( "+" | "-" ) term } .
 
-bitewiseShift    = simpleExpression[("<<"|">>") simpleExpression]
 
 term             = factor { ( "*" | "/" | "%" ) factor } .
 
