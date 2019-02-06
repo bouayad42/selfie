@@ -10,7 +10,7 @@ C\* is a tiny subset of the programming language C. C\* features global variable
 
 C\* Keywords: `uint64_t`, `void`, `if`, `else`, `while`, `return`
 
-C\* Symbols: `integer`, `character`, `string`, `identifier`, `,`, `;`, `(`, `)`, `{`, `}`, `+`, `-`, `*`, `/`, `%`, `=`, `==`, `!=`, `<`, `<=`, `>`, `>=`
+C\* Symbols: `integer`, `character`, `string`, `identifier`, `,`, `;`, `(`, `)`, `{`, `}`, `+`, `-`, `*`, `/`, `%`, `=`, `==`, `!=`, `<`, `<=`, `>`, `>=`,'<<','>>'
 
 with:
 
@@ -58,6 +58,8 @@ call             = identifier "(" [ expression { "," expression } ] ")" .
 expression       = simpleExpression [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) simpleExpression ] .
 
 simpleExpression = term { ( "+" | "-" ) term } .
+
+bitewiseShift    = simpleExpression[("<<"|">>") simpleExpression]
 
 term             = factor { ( "*" | "/" | "%" ) factor } .
 
